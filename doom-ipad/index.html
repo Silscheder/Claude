@@ -15,6 +15,7 @@
   h1{margin:0;font-size:2.4rem;color:#c33;letter-spacing:.1em}
   p{max-width:34rem;margin:0;line-height:1.5;color:#bbb}
   button,label.btn{background:#c33;color:#fff;border:0;border-radius:10px;padding:14px 28px;font-size:1.1rem;cursor:pointer}
+  label.alt{background:none;border:1px solid #666;color:#bbb;font-size:.95rem}
   input[type=file]{display:none}
   #game{position:fixed;inset:0;display:none}
   #err{color:#f88}
@@ -23,9 +24,9 @@
 <body>
 <div id="menu">
   <h1>DOOM</h1>
-  <p>Wähle ein ZIP mit deinen Doom-Dateien (DOOM.EXE + DOOM.WAD, z.&nbsp;B. die freie Shareware-Version)
-     oder ein fertiges <code>.jsdos</code>-Bundle. Die Datei bleibt auf deinem Gerät.</p>
-  <label class="btn">Doom-Datei wählen
+  <p>Shareware-Version 1.9 (Episode 1) läuft als DOS-Emulation direkt im Browser.</p>
+  <button id="play" type="button">Spiel starten</button>
+  <label class="btn alt">Eigene Doom-Datei (.zip / .jsdos) wählen
     <input id="file" type="file" accept=".zip,.jsdos">
   </label>
   <p id="err"></p>
@@ -35,30 +36,36 @@
 <script src="js-dos.js"></script>
 <script>
   const $ = id => document.getElementById(id);
-  $("file").addEventListener("change", async e => {
+  function start(url, isBundle) {
+    $("menu").style.display = "none";
+    $("game").style.display = "block";
+    Dos($("game"), {
+      url,
+      pathPrefix: "emulators/",
+      autoStart: true,
+      mouseCapture: true,
+      // ZIP: C: mounten und DOOM starten. Fertige .jsdos-Bundles bringen ihre eigene Konfiguration mit.
+      dosboxConf: isBundle ? undefined : "[autoexec]\nmount c .\nc:\ndoom\n",
+    });
+  }
+  function fail(msg) {
+    $("menu").style.display = "flex";
+    $("game").style.display = "none";
+    $("err").textContent = msg;
+  }
+  $("play").addEventListener("click", async () => {
+    $("err").textContent = "";
+    try {
+      const r = await fetch("doom-shareware.zip");
+      if (!r.ok) throw new Error("doom-shareware.zip nicht gefunden (" + r.status + ")");
+      start(URL.createObjectURL(await r.blob()), false);
+    } catch (e) { fail("Fehler: " + e.message); }
+  });
+  $("file").addEventListener("change", e => {
     const f = e.target.files[0];
     if (!f) return;
-    try {
-      $("menu").style.display = "none";
-      $("game").style.display = "block";
-      const url = URL.createObjectURL(f);
-      // Reine ZIPs ohne js-dos-Konfiguration: DOOM automatisch starten.
-      const isBundle = f.name.toLowerCase().endsWith(".jsdos");
-      Dos($("game"), {
-        url,
-        pathPrefix: "emulators/",
-        autoStart: true,
-        kiosk: false,
-        mouseCapture: true,
-        // Bei einem ZIP wird C: gemountet und DOOM gestartet.
-        dosboxConf: isBundle ? undefined :
-          "[autoexec]\nmount c .\nc:\ndoom\n",
-      });
-    } catch (err) {
-      $("menu").style.display = "flex";
-      $("game").style.display = "none";
-      $("err").textContent = "Fehler: " + err.message;
-    }
+    try { start(URL.createObjectURL(f), f.name.toLowerCase().endsWith(".jsdos")); }
+    catch (err) { fail("Fehler: " + err.message); }
   });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>

@@ -1,0 +1,50 @@
+name: Deploy Doom Player to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+    paths: ["doom-ipad/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build site
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          cp -r doom-ipad/. site/
+          rm -f site/README.md site/doom-shareware.zip
+
+          # Shareware (id Software, v1.9, frei weitergebbar) vom idgames-Mirror laden.
+          mkdir -p dl && cd dl
+          curl -fsSL -o doom19s.zip https://ftp.fu-berlin.de/pc/games/idgames/idstuff/doom/doom19s.zip
+          unzip -q doom19s.zip
+          cat DOOMS_19.1 DOOMS_19.2 > DOOMS_19.EXE
+          mkdir out && unzip -q -d out DOOMS_19.EXE || true   # PKZIP-SFX: Warnung wegen Stub ist normal
+          echo "5b2e249b9c5133ec987b3ea77596381dc0d6bc1d  out/DOOM1.WAD" | sha1sum -c -
+          (cd out && zip -q ../../site/doom-shareware.zip DOOM.EXE DOOM1.WAD README.TXT)
+          cd .. && rm -rf dl
+          ls -la site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
