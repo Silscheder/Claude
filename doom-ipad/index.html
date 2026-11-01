@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Doom">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+<link rel="manifest" href="manifest.json">
+<title>Doom Player</title>
+<link rel="stylesheet" href="js-dos.css">
+<style>
+  html,body{margin:0;height:100%;background:#111;color:#eee;font:16px -apple-system,system-ui,sans-serif}
+  #menu{display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center}
+  h1{margin:0;font-size:2.4rem;color:#c33;letter-spacing:.1em}
+  p{max-width:34rem;margin:0;line-height:1.5;color:#bbb}
+  button,label.btn{background:#c33;color:#fff;border:0;border-radius:10px;padding:14px 28px;font-size:1.1rem;cursor:pointer}
+  input[type=file]{display:none}
+  #game{position:fixed;inset:0;display:none}
+  #err{color:#f88}
+</style>
+</head>
+<body>
+<div id="menu">
+  <h1>DOOM</h1>
+  <p>Wähle ein ZIP mit deinen Doom-Dateien (DOOM.EXE + DOOM.WAD, z.&nbsp;B. die freie Shareware-Version)
+     oder ein fertiges <code>.jsdos</code>-Bundle. Die Datei bleibt auf deinem Gerät.</p>
+  <label class="btn">Doom-Datei wählen
+    <input id="file" type="file" accept=".zip,.jsdos">
+  </label>
+  <p id="err"></p>
+</div>
+<div id="game"></div>
+
+<script src="js-dos.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  $("file").addEventListener("change", async e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      $("menu").style.display = "none";
+      $("game").style.display = "block";
+      const url = URL.createObjectURL(f);
+      // Reine ZIPs ohne js-dos-Konfiguration: DOOM automatisch starten.
+      const isBundle = f.name.toLowerCase().endsWith(".jsdos");
+      Dos($("game"), {
+        url,
+        pathPrefix: "emulators/",
+        autoStart: true,
+        kiosk: false,
+        mouseCapture: true,
+        // Bei einem ZIP wird C: gemountet und DOOM gestartet.
+        dosboxConf: isBundle ? undefined :
+          "[autoexec]\nmount c .\nc:\ndoom\n",
+      });
+    } catch (err) {
+      $("menu").style.display = "flex";
+      $("game").style.display = "none";
+      $("err").textContent = "Fehler: " + err.message;
+    }
+  });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

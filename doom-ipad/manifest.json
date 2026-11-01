@@ -1,0 +1,9 @@
+{
+  "name": "Doom Player",
+  "short_name": "Doom",
+  "start_url": "index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#111111",
+  "theme_color": "#cc3333"
+}
