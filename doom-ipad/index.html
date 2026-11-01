@@ -26,8 +26,8 @@
   <h1>DOOM</h1>
   <p>Shareware-Version 1.9 (Episode 1) läuft als DOS-Emulation direkt im Browser.</p>
   <button id="play" type="button">Spiel starten</button>
-  <label class="btn alt">Eigene Doom-Datei (.zip / .jsdos) wählen
-    <input id="file" type="file" accept=".zip,.jsdos">
+  <label class="btn alt">Eigenes .jsdos-Bundle wählen
+    <input id="file" type="file" accept=".jsdos,.zip">
   </label>
   <p id="err"></p>
 </div>
@@ -35,6 +35,7 @@
 
 <script src="js-dos.js"></script>
 <script>
+(() => {
   const $ = id => document.getElementById(id);
   function start(url, isBundle) {
     $("menu").style.display = "none";
@@ -43,9 +44,7 @@
       url,
       pathPrefix: "emulators/",
       autoStart: true,
-      mouseCapture: true,
-      // ZIP: C: mounten und DOOM starten. Fertige .jsdos-Bundles bringen ihre eigene Konfiguration mit.
-      dosboxConf: isBundle ? undefined : "[autoexec]\nmount c .\nc:\ndoom\n",
+      mouseCapture: false,
     });
   }
   function fail(msg) {
@@ -68,6 +67,7 @@
     catch (err) { fail("Fehler: " + err.message); }
   });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+})();
 </script>
 </body>
 </html>

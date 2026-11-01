@@ -38,7 +38,10 @@ jobs:
           cat DOOMS_19.1 DOOMS_19.2 > DOOMS_19.EXE
           mkdir out && unzip -q -d out DOOMS_19.EXE || true   # PKZIP-SFX: Warnung wegen Stub ist normal
           echo "5b2e249b9c5133ec987b3ea77596381dc0d6bc1d  out/DOOM1.WAD" | sha1sum -c -
-          (cd out && zip -q ../../site/doom-shareware.zip DOOM.EXE DOOM1.WAD README.TXT)
+          # js-dos erwartet ein Bundle mit .jsdos/dosbox.conf
+          mkdir -p out/.jsdos
+          printf '[cpu]\ncycles=max\n[autoexec]\nmount c .\nc:\ndoom\n' > out/.jsdos/dosbox.conf
+          (cd out && zip -qr ../../site/doom-shareware.zip DOOM.EXE DOOM1.WAD README.TXT .jsdos)
           cd .. && rm -rf dl
           ls -la site
 
