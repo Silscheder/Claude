@@ -2,7 +2,7 @@ name: Deploy Doom Player to GitHub Pages
 
 on:
   push:
-    branches: [master, doom-ipad-pwa]
+    branches: [doom-ipad-pwa]
     paths: ["doom-ipad/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
